@@ -1,7 +1,6 @@
 ## Spacestagram
 
 TODO
-Pull data from API
 Make like button clickable
 Make next button choose a different random picture
 Persist likes

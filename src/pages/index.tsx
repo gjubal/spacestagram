@@ -1,22 +1,52 @@
 import Head from 'next/head';
 import Image from 'next/image';
 import {
-	FaArrowRight,
-	FaBeer,
-	FaHeart,
-	FaRegHeart,
-	FaRegThumbsUp,
-	FaThumbsUp,
-} from 'react-icons/fa';
+	Dispatch,
+	Fragment,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useState,
+} from 'react';
+import { FaArrowRight, FaHeart, FaRegHeart } from 'react-icons/fa';
+import { useQuery } from 'react-query';
+import convertToMMDDYYYY from '../utils/convertToMMDDYYYY';
+import { api } from './api/axios';
+
+type PlanetaryPicture = {
+	title: string;
+	url: string;
+	hdurl: string;
+	date: string;
+	copyright?: string;
+	explanation: string;
+};
+
+const NASA_API_KEY = '02LQhJU74dkJy3O3g6pso1xfFhLCkNa9Ds5G1l5P';
+const NASA_API_URL = 'https://api.nasa.gov/planetary/apod';
+const DATE = '2014-10-09';
 
 export default function Home() {
-	const randomDate = () => {
-		const y = Math.floor(Math.random() * 20 + 1) + 2000;
-		const m = Math.floor(Math.random() * 3) + 10;
-		const d = Math.floor(Math.random() * 20 + 1) + 10;
+	const [isLiked, setIsLiked] = useState(false);
 
-		return `${y}-${m}-${d}`;
-	};
+	const { isLoading, isError, data, error } = useQuery('planetaryData', () => {
+		return api.get<PlanetaryPicture>(`${NASA_API_URL}`, {
+			params: {
+				api_key: NASA_API_KEY,
+				date: DATE,
+			},
+		});
+	});
+
+	useEffect(() => {}, []);
+
+	if (isLoading) {
+		return <Panel type="loading" />;
+	}
+
+	if (isError) {
+		return <Panel type="error" />;
+	}
 
 	return (
 		<div className="h-screen w-screen flex flex-col justify-center items-center">
@@ -30,48 +60,60 @@ export default function Home() {
 				</h3>
 			</header>
 			<div className="p-6" />
-			<main className="grid grid-cols-2">
-				<section className="flex flex-col items-center border rounded-lg p-4 max-w-xl bg-white">
-					<h1 className="text-xl font-bold">Eclipse at Moonset</h1>
-					<div className="p-2" />
-					<Image
-						src="https://apod.nasa.gov/apod/image/1410/tle20141008_beletsky900.jpg"
-						alt="Eclipse at moonset picture"
-						width={500}
-						height={500}
-						className="rounded-lg object-cover"
-					/>
-					<div className="p-2" />
-					<p>Date of capture: {randomDate()}</p>
-					<div className="p-2" />
-					<p className="text-justify">
-						Lorem ipsum dolor sit amet consectetur adipisicing elit. Ipsam, at
-						illum minima quam dolorum repellat adipisci voluptatem commodi,
-						molestias tempore odio fugit impedit velit tenetur. Suscipit impedit
-						a culpa recusandae optio fugit officia quas saepe tempora laborum!
-						Illum ipsum, consectetur incidunt, itaque vitae cumque aliquam esse
-						ipsam labore odit neque, iste voluptatum? Aspernatur ab, neque
-						officia similique a sequi libero?
-					</p>
-					<div className="p-2" />
-					<div className="flex flex-row">
-						<LikeButton />
-						<div className="mx-1" />
-						<NextImgButton />
-					</div>
-				</section>
-				<section className="date-picker ml-4">
-					<h2 className="text-2xl">Date picker</h2>
+			<main className="grid grid-cols-1">
+				<section className="flex flex-col items-center border rounded-lg p-4 max-w-2xl bg-white">
+					{data?.data && (
+						<Fragment key={data.data.url}>
+							<h1 className="text-xl font-bold">{data.data.title}</h1>
+							<div className="p-2" />
+							<Image
+								src={data.data.hdurl}
+								alt={data.data.title}
+								width={500}
+								height={500}
+								className="rounded-lg object-cover"
+							/>
+							<div className="p-2" />
+							<p className="italic">
+								Date of capture: {convertToMMDDYYYY(data.data.date)}
+							</p>
+							<div className="p-2" />
+							<p className="p-4 text-justify">{data.data.explanation}</p>
+							<div className="p-2" />
+							<div className="flex flex-row">
+								<LikeButton isLiked={isLiked} setIsLiked={setIsLiked} />
+								<div className="mx-1" />
+								<NextImgButton />
+							</div>
+						</Fragment>
+					)}
 				</section>
 			</main>
 		</div>
 	);
 }
 
-const LikeButton = () => {
+const LikeButton: React.FC<{
+	isLiked: boolean;
+	setIsLiked: Dispatch<SetStateAction<boolean>>;
+}> = ({ isLiked, setIsLiked }) => {
+	useEffect(() => {
+		const likeState = localStorage.getItem('likeState');
+
+		likeState === 'true' ? setIsLiked(true) : setIsLiked(false);
+	}, [setIsLiked]);
+
 	return (
-		<button className="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 px-4 border border-gray-400 rounded shadow">
-			<FaRegHeart />
+		<button
+			onClick={() => {
+				setIsLiked(!isLiked);
+				isLiked
+					? localStorage.setItem('likeState', 'false')
+					: localStorage.setItem('likeState', 'true');
+			}}
+			className="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 px-4 border border-gray-400 rounded shadow"
+		>
+			{isLiked ? <FaHeart /> : <FaRegHeart />}
 		</button>
 	);
 };
@@ -81,5 +123,17 @@ const NextImgButton = () => {
 		<button className="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 px-4 border border-gray-400 rounded shadow">
 			<FaArrowRight />
 		</button>
+	);
+};
+
+const Panel: React.FC<{ type: 'loading' | 'error' }> = ({ type }) => {
+	return (
+		<div className="h-screen w-screen flex flex-col justify-center items-center">
+			{type === 'error' ? (
+				<h1 className="text-6xl font-bold text-red-500">Error!</h1>
+			) : (
+				<h1 className="text-6xl font-bold text-gray-600">Loading...</h1>
+			)}
+		</div>
 	);
 };
