@@ -1,9 +1,5 @@
 ## Spacestagram
 
-TODO
-Make like button clickable
-Make next button choose a different random picture
-Persist likes
-Add loading
-Animate like button
-Add a date-picker
+[Link to live demo](https://spacestagram-e5gxuet0l-gjubal.vercel.app/)
+
+By Gabriel Duarte Silva
