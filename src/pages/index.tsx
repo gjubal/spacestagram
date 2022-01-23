@@ -52,7 +52,7 @@ export default function Home() {
 	}
 
 	return (
-		<div className="h-screen w-screen flex flex-col justify-center items-center">
+		<div className="h-full w-full flex flex-col justify-center items-center my-4 py-4">
 			<header className="title">
 				<h1 className="text-6xl font-bold underline text-center mb-4">
 					Spacestagram
