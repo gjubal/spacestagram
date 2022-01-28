@@ -3,9 +3,11 @@ import Image from 'next/image';
 import {
 	Dispatch,
 	Fragment,
+	ImgHTMLAttributes,
 	SetStateAction,
 	useCallback,
 	useEffect,
+	useRef,
 	useState,
 } from 'react';
 import { FaArrowRight, FaHeart, FaRegHeart } from 'react-icons/fa';
@@ -13,9 +15,6 @@ import { useQuery } from 'react-query';
 import convertToMMDDYYYY from '../utils/convertToMMDDYYYY';
 import { getRandomDate } from '../utils/getRandomDate';
 import { api } from './api/axios';
-
-const NASA_API_URL = 'https://api.nasa.gov/planetary/apod';
-const NASA_API_KEY = '02LQhJU74dkJy3O3g6pso1xfFhLCkNa9Ds5G1l5P';
 
 type PlanetaryPicture = {
 	title: string;
@@ -32,15 +31,18 @@ export default function Home() {
 	const {
 		isLoading,
 		isError,
-		data: planetPicture,
+		data: pictureInfo,
 		refetch,
 	} = useQuery('planetaryData', () => {
-		return api.get<PlanetaryPicture>(`${NASA_API_URL}`, {
-			params: {
-				api_key: NASA_API_KEY,
-				date: getRandomDate(),
-			},
-		});
+		return api.get<PlanetaryPicture>(
+			`${process.env.NEXT_PUBLIC_NASA_API_URL}`,
+			{
+				params: {
+					api_key: process.env.NASA_API_KEY,
+					date: getRandomDate(),
+				},
+			}
+		);
 	});
 
 	if (isLoading) {
@@ -52,7 +54,7 @@ export default function Home() {
 	}
 
 	return (
-		<div className="h-full w-full flex flex-col justify-center items-center my-4 py-4">
+		<div className="h-full w-full flex flex-col justify-center items-center my-5 py-5">
 			<header className="title">
 				<h1 className="text-6xl font-bold underline text-center mb-4">
 					Spacestagram
@@ -65,32 +67,24 @@ export default function Home() {
 			<div className="p-6" />
 			<main className="grid grid-cols-1">
 				<section className="flex flex-col items-center border rounded-lg p-4 max-w-2xl bg-white">
-					{planetPicture?.data && (
-						<Fragment key={planetPicture.data.url}>
-							<h1 className="text-xl font-bold">{planetPicture.data.title}</h1>
+					{pictureInfo?.data && (
+						<Fragment key={pictureInfo.data.url}>
+							<h1 className="text-xl font-bold">{pictureInfo.data.title}</h1>
 							<div className="p-2" />
-							{!planetPicture && (
-								<img
-									src="/rings.svg"
-									className="bg-gray-800 w-48"
-									alt="Loading..."
-								/>
-							)}
 							<Image
-								src={planetPicture.data.hdurl}
-								alt={planetPicture.data.title}
+								src={pictureInfo.data.hdurl}
+								alt={pictureInfo.data.title}
 								width={600}
 								height={500}
 								className="rounded-lg object-cover"
 							/>
+
 							<div className="p-2" />
 							<p className="italic">
-								Date of capture: {convertToMMDDYYYY(planetPicture.data.date)}
+								Date of capture: {convertToMMDDYYYY(pictureInfo.data.date)}
 							</p>
 							<div className="p-2" />
-							<p className="p-4 text-justify">
-								{planetPicture.data.explanation}
-							</p>
+							<p className="p-4 text-justify">{pictureInfo.data.explanation}</p>
 							<div className="p-2" />
 							<div className="flex flex-row">
 								<LikeButton isLiked={isLiked} setIsLiked={setIsLiked} />
